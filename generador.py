@@ -2,14 +2,14 @@ import os
 import json
 import shutil
 import bz2
-import getopt
 import networkx as nx
 from collections import defaultdict
+import collections
 import sys
 import itertools
 import argparse
 import argparse
-path = os.getcwd()
+
 
 # Generates a function that gets the following parameters once started or running the program:
 # a.	-d <relative> :  (default value: data)
@@ -44,6 +44,12 @@ def get_parameters(argv):
     args = parser.parse_args(argv)
     return vars(args)
     
-
-
-print(get_parameters(sys.argv[1:]))
+def main(args):
+    path = os.getcwd()
+    print(path)
+    print(args)
+    print(get_parameters(args))
+    
+# If name is main, then the program is running directly
+if __name__ == '__main__':
+    main(sys.argv[1:])
