@@ -43,12 +43,25 @@ def get_parameters(argv):
     parser.add_argument('-jcrt', '--json_corretweets', action='store_true', help='JSON corretweets')
     args = parser.parse_args(argv)
     return vars(args)
-    
+
+# Generates a function
+# that takes as a parameter the name of a file of a json.bz2 type
+# and returns a list of dictionaries taken from each line of the file
+def read_json_bz2(filename):
+    tweets = []
+    with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
+        tweets=[json.loads(line.strip()) for line in bzinput]
+    return tweets
+
+# Main function
 def main(args):
     path = os.getcwd()
     print(path)
     print(args)
     print(get_parameters(args))
+    # Read the json from the relative directory
+    tweets = read_json_bz2(os.path.join(path, "30.json.bz2"))
+    print(tweets[0])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
