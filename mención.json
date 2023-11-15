@@ -181,120 +181,6 @@
       ]
     },
     {
-      "username": "rzzp",
-      "receivedMentions": 18,
-      "mentions": [
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        },
-        {
-          "mentionBy": "TWIOFFPAKO",
-          "tweets": [
-            "684638989219934208"
-          ]
-        }
-      ]
-    },
-    {
       "username": "carterreynolds",
       "receivedMentions": 15,
       "mentions": [
@@ -1141,24 +1027,6 @@
       ]
     },
     {
-      "username": "NNurdayanti",
-      "receivedMentions": 2,
-      "mentions": [
-        {
-          "mentionBy": "FerinIstiqomah",
-          "tweets": [
-            "684638657869791233"
-          ]
-        },
-        {
-          "mentionBy": "FerinIstiqomah",
-          "tweets": [
-            "684638657869791233"
-          ]
-        }
-      ]
-    },
-    {
       "username": "namas1280",
       "receivedMentions": 2,
       "mentions": [
@@ -1262,24 +1130,6 @@
           "mentionBy": "janneth_marure",
           "tweets": [
             "684638477514752000"
-          ]
-        }
-      ]
-    },
-    {
-      "username": "yUa_992",
-      "receivedMentions": 2,
-      "mentions": [
-        {
-          "mentionBy": "kuma06304",
-          "tweets": [
-            "684638116792025088"
-          ]
-        },
-        {
-          "mentionBy": "kuma06304",
-          "tweets": [
-            "684638116792025088"
           ]
         }
       ]
@@ -6307,6 +6157,18 @@
       ]
     },
     {
+      "username": "rzzp",
+      "receivedMentions": 1,
+      "mentions": [
+        {
+          "mentionBy": "TWIOFFPAKO",
+          "tweets": [
+            "684638989219934208"
+          ]
+        }
+      ]
+    },
+    {
       "username": "reysbian",
       "receivedMentions": 1,
       "mentions": [
@@ -10658,6 +10520,18 @@
           "mentionBy": "Lowercasekdot",
           "tweets": [
             "684638657874034688"
+          ]
+        }
+      ]
+    },
+    {
+      "username": "NNurdayanti",
+      "receivedMentions": 1,
+      "mentions": [
+        {
+          "mentionBy": "FerinIstiqomah",
+          "tweets": [
+            "684638657869791233"
           ]
         }
       ]
@@ -15314,6 +15188,18 @@
           "mentionBy": "drdrew",
           "tweets": [
             "684638116804726784"
+          ]
+        }
+      ]
+    },
+    {
+      "username": "yUa_992",
+      "receivedMentions": 1,
+      "mentions": [
+        {
+          "mentionBy": "kuma06304",
+          "tweets": [
+            "684638116792025088"
           ]
         }
       ]

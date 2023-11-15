@@ -144,11 +144,13 @@ def process_mentions(json_list, write=False):
                 }
                 mentions_list.append(mention_entry)
             else:
-                found_mention["receivedMentions"] += 1
-                found_mention["mentions"].append({
-                    "mentionBy": tweet["user"]["screen_name"],
-                    "tweets": [tweet_id]
-                })
+                found_tweet = next((t for t in found_mention["mentions"] if t["mentionBy"] == tweet["user"]["screen_name"] and tweet_id in t["tweets"]), None)
+                if found_tweet is None:
+                    found_mention["receivedMentions"] += 1
+                    found_mention["mentions"].append({
+                        "mentionBy": tweet["user"]["screen_name"],
+                        "tweets": [tweet_id]
+                    })
     # Parse the list to a json
     mentions_list = sorted(mentions_list, key=lambda x: x["receivedMentions"], reverse=True)
     # delete all the mentions for null
@@ -266,6 +268,25 @@ def corretweets_graph(coretweets_list):
     # Return the graph
     return graph
 
+# Create a function that returns a list with all the folders in a directory
+def get_folders(directory):
+    return [name for name in os.listdir(directory) if os.path.isdir(os.path.join(directory, name))]
+
+# Create a function named read_json_files_bz2_third_level that takes as a parameter a directory
+# then concatenate all the lists of dictionaries taken from each line of the files of the directories
+# that are inside the directory
+def read_json_files_bz2_third_level(directory, restriction="none"):
+    # Get the list of folders in the directory
+    list_of_folders = get_folders(directory)
+    # Create a list of lists of dictionaries
+    list_of_lists = []
+    # Iterate over the list of folders
+    # # Iterate over the list of files
+    # # # Read the json.bz2 file
+    list_of_lists=[read_json_files_bz2(os.path.join(directory, folder), restriction=restriction) for folder in list_of_folders]
+    # Concatenate the lists
+    return concatenate_lists(list_of_lists)
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -274,11 +295,11 @@ def main(args):
     print(get_parameters(args))
 
     # Read the json from the relative directory
-    tweets_list = read_json_files_bz2(path+"/testing", restriction="rts")
+    tweets_list = read_json_files_bz2(path+"/no_testing", restriction="mtns")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_corretweets(tweets_list, write=True)
-    corretweets_graph(dictionary["coretweets"])
+    dictionary = process_mentions(tweets_list, write=True)
+    mentions_graph(dictionary["mentions"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
