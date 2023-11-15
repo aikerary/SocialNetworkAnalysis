@@ -3,7 +3,7 @@ import json
 import shutil
 import bz2
 import networkx as nx
-from collections import defaultdict
+from collections import Counter, defaultdict
 import collections
 import sys
 import itertools
@@ -99,6 +99,43 @@ def process_retweets(json_list):
 
     return result_dict
 
+
+def process_mentions(json_list):
+    mentions_dict = extract_mentions(json_list)
+    mentions_list = list(mentions_dict.values())
+    result = {"mentions": mentions_list}
+    save_to_json(result, 'mención.json')
+    return result
+
+def extract_mentions(json_list):
+    mentions_dict = {}
+
+    for tweet in json_list:
+        user_mentions = tweet.get("entities", {}).get("user_mentions", [])
+        tweet_id = str(tweet.get("id", ""))
+
+        for mention in user_mentions:
+            username = mention.get("screen_name", "")
+            if username not in mentions_dict:
+                mentions_dict[username] = {
+                    "username": username,
+                    "receivedMentions": 0,
+                    "mentions": []
+                }
+
+            mentions_dict[username]["receivedMentions"] += 1
+            mentions_dict[username]["mentions"].append({
+                "mentionBy": tweet["user"]["screen_name"],
+                "tweets": [tweet_id]
+            })
+
+    return mentions_dict
+
+def save_to_json(data, filename):
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file, indent=2)
+
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -106,10 +143,10 @@ def main(args):
     print(args)
     print(get_parameters(args))
     # Read the json from the relative directory
-    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
+    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="mtns")
     print(tweets_list[0])
     print(len(tweets_list))
-    print(type(process_retweets(tweets_list)))
+    print(type(process_mentions(tweets_list)))
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
