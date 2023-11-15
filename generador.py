@@ -54,7 +54,7 @@ def read_json_bz2(filename, restriction="none"):
         elif restriction == "mtns":
            tweets = [json.loads(line) for line in bzinput if 
                      "entities" in json.loads(line) and "user_mentions" 
-                     in json.loads(line)["entities"]]
+                     in json.loads(line)["entities"] and not("retweeted_status" in json.loads(line))]
         else:
             tweets = [json.loads(line) for line in bzinput]
     return tweets

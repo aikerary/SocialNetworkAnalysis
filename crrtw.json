@@ -1,0 +1,24 @@
+{
+  "coretweets": [
+    {
+      "authors": {
+        "u1": "Humoryfotos",
+        "u2": "Ledesma2Flopy"
+      },
+      "totalCoretweets": 1,
+      "retweeters": [
+        "CitouBettencour"
+      ]
+    },
+    {
+      "authors": {
+        "u1": "CautiousHunter",
+        "u2": "RoyalBlondie_"
+      },
+      "totalCoretweets": 1,
+      "retweeters": [
+        "LuminousBloom"
+      ]
+    }
+  ]
+}
