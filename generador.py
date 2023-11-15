@@ -62,6 +62,7 @@ def get_parameters(argv):
     args = parser.parse_args(argv)
     return vars(args)
 
+
 # Create a function named read_json_files_bz2 that takes as a parameter a directory
 # and returns a list of dictionaries taken from each line of the files
 # of each json.bz2 file in the directory finally concatenate all the lists
@@ -328,7 +329,9 @@ def get_directories_with_json_bz2(base_directory):
 # Generates a function
 # that takes as a parameter the name of a file of a json.bz2 type
 # and returns a list of dictionaries taken from each line of the file
-def read_json_bz2(filename, restriction=None, start_date=None, end_date=None, hashtags=None):
+def read_json_bz2(
+    filename, restriction=None, start_date=None, end_date=None, hashtags=None
+):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
         if restriction == "rts":
@@ -336,6 +339,8 @@ def read_json_bz2(filename, restriction=None, start_date=None, end_date=None, ha
                 json.loads(line)
                 for line in bzinput
                 if "retweeted_status" in json.loads(line)
+                and filter_by_date(json.loads(line), start_date, end_date)
+                and filter_by_hashtags(json.loads(line), hashtags)
             ]
         elif restriction == "mtns":
             tweets = [
@@ -344,39 +349,81 @@ def read_json_bz2(filename, restriction=None, start_date=None, end_date=None, ha
                 if "entities" in json.loads(line)
                 and "user_mentions" in json.loads(line)["entities"]
                 and not ("retweeted_status" in json.loads(line))
+                and filter_by_date(json.loads(line), start_date, end_date)
+                and filter_by_hashtags(json.loads(line), hashtags)
             ]
         else:
-            tweets = [json.loads(line) for line in bzinput]
-        tweets_by_date = filter_by_date(tweets, start_date, end_date)
+            tweets = [
+                json.loads(line)
+                for line in bzinput
+                if filter_by_date(json.loads(line), start_date, end_date)
+                and filter_by_hashtags(json.loads(line), hashtags)
+            ]
     return tweets
 
-# Create a function that receives a list of dictionaries
+
+# Create a function that receives a single tweet
 # and a start date and an end date with the format "dd-mm-yy" (It could be None)
 # and be sure that the date of the tweet is between the start date and the end date
 # the date of the tweet is in the key "created_at" of the dictionary
 # and it is in the format "Wed Jun 25 04:08:58 +0000 2014"
 # if the start date is None then just ignore it
 # if the end date is None then just ignore it
-def filter_by_date(tweets_list, start_date=None, end_date=None):
-    if start_date is not None:
-        start_date = datetime.strptime(start_date, "%d-%m-%y")
-    if end_date is not None:
-        end_date = datetime.strptime(end_date, "%d-%m-%y")
-    return [
-        tweet
-        for tweet in tweets_list
-        if (
-            (start_date is None or datetime.strptime(tweet["created_at"], "%a %b %d %H:%M:%S %z %Y") >= start_date)
-            and (end_date is None or datetime.strptime(tweet["created_at"], "%a %b %d %H:%M:%S %z %Y") <= end_date)
+def filter_by_date(tweet, start_date=None, end_date=None):
+    if start_date is None and end_date is None:
+        return True
+    elif start_date is None:
+        return datetime.strptime(
+            tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
+        ) <= datetime.strptime(end_date, "%d-%m-%y")
+    elif end_date is None:
+        return datetime.strptime(
+            tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
+        ) >= datetime.strptime(start_date, "%d-%m-%y")
+    else:
+        return datetime.strptime(
+            tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
+        ) >= datetime.strptime(start_date, "%d-%m-%y") and datetime.strptime(
+            tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
+        ) <= datetime.strptime(
+            end_date, "%d-%m-%y"
         )
-    ]
+
+
+# Create a function named extract_hashtags that takes as a parameter the name of a file
+# and returns a list of hashtags taken from each line of the file in the current directory
+def extract_hashtags(filename):
+    hashtags = []
+    with open(filename, "r") as file:
+        hashtags = [line.strip() for line in file]
+    return hashtags
+
+
+# Create a function that receives a single tweet and a lsit of hashtags (it could be empty or be None)
+# and be sure that the tweet has at least one of the hashtags in the list
+# the hashtags are a list in entities -> hashtags
+# if the list of hashtags is None then just ignore it
+# if the list of hashtags is empty then just ignore it
+def filter_by_hashtags(tweet, hashtags=None):
+    if hashtags is None or len(hashtags) == 0:
+        return True
+    else:
+        return (
+            len(
+                [
+                    hashtag["text"]
+                    for hashtag in tweet["entities"]["hashtags"]
+                    if hashtag["text"] in hashtags
+                ]
+            )
+            > 0
+        )
 
 
 # Create a function named concatenate_lists that takes as a parameter a list of lists
 # and returns a list with all the elements of the lists, use sum(list, []) to concatenate
 def concatenate_lists(list_of_lists):
     return sum(list_of_lists, [])
-
 
 
 # Main function
