@@ -274,11 +274,11 @@ def main(args):
     print(get_parameters(args))
 
     # Read the json from the relative directory
-    tweets_list = read_json_files_bz2(path+"/testing", restriction="mtns")
+    tweets_list = read_json_files_bz2(path+"/testing", restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_mentions(tweets_list, write=True)
-    mentions_graph(dictionary["mentions"])
+    dictionary = process_corretweets(tweets_list, write=True)
+    corretweets_graph(dictionary["coretweets"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
