@@ -4,6 +4,7 @@ import shutil
 import bz2
 import networkx as nx
 from collections import defaultdict
+from datetime import datetime, timedelta
 import sys
 import argparse
 import numpy as np
@@ -287,6 +288,43 @@ def read_json_files_bz2_third_level(directory, restriction="none"):
     # Concatenate the lists
     return concatenate_lists(list_of_lists)
 
+def get_folders_in_date_range(start_date, end_date, base_path='path/to/your/directory'):
+    date_format = '%d-%m-%y'
+    start_date_obj = datetime.strptime(start_date, date_format)
+    end_date_obj = datetime.strptime(end_date, date_format)
+    delta = timedelta(days=1)
+
+    date_list = [start_date_obj + timedelta(days=x) for x in range((end_date_obj - start_date_obj).days + 1)]
+    folder_paths = []
+
+    for date in date_list:
+        year = date.strftime('%Y')
+        month = date.strftime('%m')
+        day = date.strftime('%d')
+        folder_path = os.path.join(base_path, year, month, day)
+
+        if os.path.exists(folder_path):
+            folder_paths.append(folder_path)
+
+    return folder_paths
+
+
+# Create a function named read_json_files_bz2_date_range that takes as a parameter a directory
+# an start date and an end date then
+# generates the list of folders in the date range, applies the function read_json_files_bz2_third_level
+# and concatenates all the results for each folder if it exists
+def read_json_files_bz2_date_range(directory, start_date, end_date, restriction="none"):
+    # Get the list of folders in the date range
+    list_of_folders = get_folders_in_date_range(start_date, end_date, directory)
+    # Create a list of lists of dictionaries
+    list_of_lists = []
+    # Iterate over the list of folders
+    # # Iterate over the list of files
+    # # # Read the json.bz2 file
+    list_of_lists=[read_json_files_bz2_third_level(os.path.join(directory, folder), restriction=restriction) for folder in list_of_folders]
+    # Concatenate the lists
+    return concatenate_lists(list_of_lists)
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -295,7 +333,7 @@ def main(args):
     print(get_parameters(args))
 
     # Read the json from the relative directory
-    tweets_list = read_json_files_bz2_third_level(path+"/testing", restriction="rts")
+    tweets_list = read_json_files_bz2_date_range(path+"/testing", "01-01-16", "08-02-16", restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
     dictionary = process_retweets(tweets_list, write=True)
