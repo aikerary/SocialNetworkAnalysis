@@ -135,6 +135,50 @@ def save_to_json(data, filename):
     with open(filename, 'w') as json_file:
         json.dump(data, json_file, indent=2)
 
+def extract_retweets(tweet_list):
+    retweets_by_author = defaultdict(list)
+    
+    for tweet in tweet_list:
+        screen_name = tweet["user"]["screen_name"]
+        retweeted_status = tweet.get("retweeted_status")
+        
+        if retweeted_status:
+            original_author_screen_name = retweeted_status["user"]["screen_name"]
+            retweets_by_author[original_author_screen_name].append(screen_name)
+    
+    return retweets_by_author
+
+def find_common_retweeters(retweeters1, retweeters2):
+    return list(set(retweeters1) & set(retweeters2))
+
+def generate_coretweet(author1, author2, common_retweeters):
+    pair = tuple(sorted([author1, author2]))
+    return {
+        "authors": {"u1": pair[0], "u2": pair[1]},
+        "totalCoretweets": len(common_retweeters),
+        "retweeters": common_retweeters
+    }
+
+def find_coretweets(tweet_list):
+    coretweets = []
+    retweets_by_author = extract_retweets(tweet_list)
+    seen_pairs = set()
+
+    for author1, retweeters1 in retweets_by_author.items():
+        for author2, retweeters2 in retweets_by_author.items():
+            if author1 != author2:
+                common_retweeters = find_common_retweeters(retweeters1, retweeters2)
+                if common_retweeters:
+                    coretweet = generate_coretweet(author1, author2, common_retweeters)
+                    if tuple(sorted([author1, author2])) not in seen_pairs:
+                        coretweets.append(coretweet)
+                        seen_pairs.add(tuple(sorted([author1, author2])))
+
+    return {"coretweets": coretweets}
+
+def write_to_json(data):
+    with open("crrtw.json", "w") as outfile:
+        json.dump(data, outfile, indent=2)
 
 # Main function
 def main(args):
@@ -143,10 +187,10 @@ def main(args):
     print(args)
     print(get_parameters(args))
     # Read the json from the relative directory
-    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="mtns")
+    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    print(type(process_mentions(tweets_list)))
+    print(type(find_coretweets(tweets_list)))
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
