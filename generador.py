@@ -203,6 +203,24 @@ def mentions_graph(mentions_list):
     # Return the graph
     return graph
 
+# Create a function named retweets_graph that takes as a parameter a list of tweets
+# and returns a graph with the retweets, also create the graph in gexf format
+def retweets_graph(retweets_list):
+    # Create a graph
+    graph = nx.Graph()
+    # Add the nodes
+    for retweet in retweets_list:
+        graph.add_node(retweet["username"], receivedRetweets=retweet["receivedRetweets"])
+    # Add the edges
+    for retweet in retweets_list:
+        for tweet in retweet["tweets"]:
+            for retweeter in retweet["tweets"][tweet]["retweetedBy"]:
+                graph.add_edge(retweet["username"], retweeter, tweetId=tweet)
+    # Save the graph in gexf format
+    nx.write_gexf(graph, "rt.gexf")
+    # Return the graph
+    return graph
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -210,11 +228,11 @@ def main(args):
     print(args)
     print(get_parameters(args))
     # Read the json from the relative directory
-    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="mtns")
+    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_mentions(tweets_list)
-    mentions_graph(dictionary["mentions"])
+    dictionary = process_retweets(tweets_list)
+    retweets_graph(dictionary["retweets"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
