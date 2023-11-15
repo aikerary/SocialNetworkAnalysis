@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import sys
 import argparse
 import numpy as np
+from datetime import datetime, timezone
 
 
 # Generates a function that gets the following parameters once started or running the program:
@@ -338,7 +339,8 @@ def read_json_bz2(
             tweets = [
                 json.loads(line)
                 for line in bzinput
-                if "retweeted_status" in json.loads(line)
+                if "entities" in json.loads(line)
+                and "retweeted_status" in json.loads(line)
                 and filter_by_date(json.loads(line), start_date, end_date)
                 and filter_by_hashtags(json.loads(line), hashtags)
             ]
@@ -356,7 +358,8 @@ def read_json_bz2(
             tweets = [
                 json.loads(line)
                 for line in bzinput
-                if filter_by_date(json.loads(line), start_date, end_date)
+                if "entities" in json.loads(line)
+                and filter_by_date(json.loads(line), start_date, end_date)
                 and filter_by_hashtags(json.loads(line), hashtags)
             ]
     return tweets
@@ -368,34 +371,26 @@ def read_json_bz2(
 # the date of the tweet is in the key "created_at" of the dictionary
 # and it is in the format "Wed Jun 25 04:08:58 +0000 2014"
 # if the start date is None then just ignore it
-# if the end date is None then just ignore it
+
 def filter_by_date(tweet, start_date=None, end_date=None):
     if start_date is None and end_date is None:
         return True
     elif start_date is None:
         return datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
-        ) <= datetime.strptime(end_date, "%d-%m-%y")
+        ) <= datetime.strptime(end_date, "%d-%m-%y").replace(tzinfo=timezone.utc)
     elif end_date is None:
         return datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
-        ) >= datetime.strptime(start_date, "%d-%m-%y")
+        ) >= datetime.strptime(start_date, "%d-%m-%y").replace(tzinfo=timezone.utc)
     else:
         return datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
-        ) >= datetime.strptime(start_date, "%d-%m-%y") and datetime.strptime(
+        ) >= datetime.strptime(start_date, "%d-%m-%y").replace(tzinfo=timezone.utc) and datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
         ) <= datetime.strptime(
             end_date, "%d-%m-%y"
-        )
-
-
-# Create a function named extract_hashtags that takes as a parameter the name of a file
-# and returns a list of hashtags taken from each line of the file in the current directory
-def extract_hashtags(filename):
-    hashtags = []
-    with open(filename, "r") as file:
-        hashtags = [line.strip() for line in file]
+        ).replace(tzinfo=timezone.utc)
     return hashtags
 
 
@@ -404,19 +399,14 @@ def extract_hashtags(filename):
 # the hashtags are a list in entities -> hashtags
 # if the list of hashtags is None then just ignore it
 # if the list of hashtags is empty then just ignore it
+# also verify if it does not have entities field
 def filter_by_hashtags(tweet, hashtags=None):
-    if hashtags is None or len(hashtags) == 0:
+    if hashtags is None or hashtags == []:
         return True
     else:
-        return (
-            len(
-                [
-                    hashtag["text"]
-                    for hashtag in tweet["entities"]["hashtags"]
-                    if hashtag["text"] in hashtags
-                ]
-            )
-            > 0
+        return any(
+            hashtag["text"].lower() in hashtags
+            for hashtag in tweet["entities"]["hashtags"]
         )
 
 
@@ -425,18 +415,38 @@ def filter_by_hashtags(tweet, hashtags=None):
 def concatenate_lists(list_of_lists):
     return sum(list_of_lists, [])
 
+# Create a function that receives a base directory, a restriction (rts, mtns or none),
+# an start date, an end date and a list of hashtags (it could be empty or be None)
+# and returns a list of tweets that are in all the possible json.bz2 files in all the subdirectories
+# of the base directory
+def read_json_files(
+    base_directory, start_date=None, end_date=None, restriction=None, hashtags=None
+):
+    # Get the list of directories with json.bz2 files
+    list_of_directories = get_directories_with_json_bz2(base_directory)
+    # Read the json.bz2 files
+    list_of_lists = [
+        read_json_bz2(
+            directory,
+            restriction,
+            start_date,
+            end_date,
+            hashtags,
+        )
+        for directory in list_of_directories
+    ]
+    # Concatenate the lists
+    return concatenate_lists(list_of_lists)
+
 
 # Main function
 def main(args):
     path = os.getcwd()
     print(path)
-    print(args)
-    print(type(get_parameters(args)))
     print(get_directories_with_json_bz2(path + "/testing"))
 
     # Read the json from the relative directory
-    # tweets_list = read_json_files_bz2_date_range(path+"/testing", "01-01-16", "08-02-16", restriction="rts")
-    print(tweets_list[0])
+    tweets_list = read_json_files(path+"/testing",restriction="rts", end_date="07-01-16")
     print(len(tweets_list))
     dictionary = process_retweets(tweets_list, write=True)
     retweets_graph(dictionary["retweets"])
