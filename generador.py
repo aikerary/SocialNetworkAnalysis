@@ -105,6 +105,8 @@ def process_retweets(json_list):
 def process_mentions(json_list):
     mentions_dict = extract_mentions(json_list)
     mentions_list = list(mentions_dict.values())
+    # Sort the list by the number of mentions received
+    mentions_list = sorted(mentions_list, key=lambda x: x["receivedMentions"], reverse=True)
     result = {"mentions": mentions_list}
     save_to_json(result, 'mención.json')
     return result
@@ -183,6 +185,24 @@ def write_to_json(data):
     with open("crrtw.json", "w") as outfile:
         json.dump(data, outfile, indent=2)
 
+# Create a function named mentions_graph that takes as a parameter a list of tweets
+# and returns a graph with the mentions, also create the graph in gexf format
+def mentions_graph(mentions_list):
+    # Create a graph
+    graph = nx.Graph()
+    # Add the nodes
+    for mention in mentions_list:
+        graph.add_node(mention["username"], receivedMentions=mention["receivedMentions"])
+    # Add the edges
+    for mention in mentions_list:
+        for mention_data in mention["mentions"]:
+            for tweet in mention_data["tweets"]:
+                graph.add_edge(mention["username"], mention_data["mentionBy"], tweetId=tweet)
+    # Save the graph in gexf format
+    nx.write_gexf(graph, "mención.gexf")
+    # Return the graph
+    return graph
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -190,10 +210,11 @@ def main(args):
     print(args)
     print(get_parameters(args))
     # Read the json from the relative directory
-    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
+    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="mtns")
     print(tweets_list[0])
     print(len(tweets_list))
-    print(type(find_coretweets(tweets_list)))
+    dictionary = process_mentions(tweets_list)
+    mentions_graph(dictionary["mentions"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
