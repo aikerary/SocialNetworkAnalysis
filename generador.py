@@ -121,16 +121,7 @@ def process_retweets(json_list, write=False):
 
 
 def process_mentions(json_list, write=False):
-    mentions_dict = extract_mentions(json_list)
-    mentions_list = list(mentions_dict.values())
-    # Sort the list by the number of mentions received
-    mentions_list = sorted(mentions_list, key=lambda x: x["receivedMentions"], reverse=True)
-    result = {"mentions": mentions_list}
-    save_to_json(result, 'mención.json', write=write)
-    return result
-
-def extract_mentions(json_list):
-    mentions_dict = {}
+    mentions_list = []
 
     for tweet in json_list:
         user_mentions = tweet.get("entities", {}).get("user_mentions", [])
@@ -138,26 +129,38 @@ def extract_mentions(json_list):
 
         for mention in user_mentions:
             username = mention.get("screen_name", "")
-            if username not in mentions_dict:
-                mentions_dict[username] = {
+            found_mention = next((m for m in mentions_list if m["username"] == username), None)
+
+            if found_mention is None:
+                mention_entry = {
                     "username": username,
-                    "receivedMentions": 0,
-                    "mentions": []
+                    "receivedMentions": 1,
+                    "mentions": [
+                        {
+                            "mentionBy": tweet["user"]["screen_name"],
+                            "tweets": [tweet_id]
+                        }
+                    ]
                 }
+                mentions_list.append(mention_entry)
+            else:
+                found_mention["receivedMentions"] += 1
+                found_mention["mentions"].append({
+                    "mentionBy": tweet["user"]["screen_name"],
+                    "tweets": [tweet_id]
+                })
+    # Parse the list to a json
+    mentions_list = sorted(mentions_list, key=lambda x: x["receivedMentions"], reverse=True)
+    # delete all the mentions for null
+    mentions_list = [x for x in mentions_list if x["username"] != "null"]
+    result= {"mentions": mentions_list}
+    save_to_json(result, 'mención.json', write=write)
+    return result
 
-            mentions_dict[username]["receivedMentions"] += 1
-            mentions_dict[username]["mentions"].append({
-                "mentionBy": tweet["user"]["screen_name"],
-                "tweets": [tweet_id]
-            })
-
-    return mentions_dict
 
 def save_to_json(data, filename, write=False):
     if write:
-        # Write to a new JSON file
-        output_filename = filename.replace('.json', '_parsed.json')
-        with open(output_filename, 'w') as json_file:
+        with open(filename, 'w') as json_file:
             json.dump(data, json_file, indent=2)
 
 def extract_retweets(tweet_list):
@@ -271,11 +274,11 @@ def main(args):
     print(get_parameters(args))
 
     # Read the json from the relative directory
-    tweets_list = read_json_files_bz2(path+"/testing", restriction="rts")
+    tweets_list = read_json_files_bz2(path+"/testing", restriction="mtns")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_retweets(tweets_list, write=True)
-    retweets_graph(dictionary["retweets"])
+    dictionary = process_mentions(tweets_list, write=True)
+    mentions_graph(dictionary["mentions"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
