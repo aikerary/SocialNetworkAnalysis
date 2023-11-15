@@ -8,8 +8,6 @@ import collections
 import sys
 import itertools
 import argparse
-import argparse
-
 
 # Generates a function that gets the following parameters once started or running the program:
 # a.	-d <relative> :  (default value: data)
@@ -19,14 +17,13 @@ import argparse
 # archivo de texto en el 
 # que se encuentra los hashtags por 
 # los cuales se filtrarán los tweets,
-# uno en cada líne
-# a.	-grt: (could be or not is a boolean if it exists it is true)
-# b.	-jrt: (could be or not is a boolean if it exists it is true)
-# c.	-gm: (could be or not is a boolean if it exists it is true)
-# d.    -jm: (could be or not is a boolean if it exists it is true)
-# e.	-gcrt: (could be or not is a boolean if it exists it is true)
-# f.    -jcrt: (could be or not is a boolean if it exists it is true)
-
+# uno en cada línea
+# e.	-grt: (could be or not is a boolean if it exists it is true)
+# f.	-jrt: (could be or not is a boolean if it exists it is true)
+# g.	-gm: (could be or not is a boolean if it exists it is true)
+# h.    -jm: (could be or not is a boolean if it exists it is true)
+# i.	-gcrt: (could be or not is a boolean if it exists it is true)
+# j.    -jcrt: (could be or not is a boolean if it exists it is true)
 def get_parameters(argv):
     parser = argparse.ArgumentParser(description='Process some parameters.', add_help=False)
     parser.add_argument('-d', '--directory', type=str, default='data', help='Relative directory (default: data)')
@@ -45,18 +42,25 @@ def get_parameters(argv):
 # Generates a function
 # that takes as a parameter the name of a file of a json.bz2 type
 # and returns a list of dictionaries taken from each line of the file
-def read_json_bz2(filename, restriction="none"):
+def read_json_bz2(filename, restriction="none", write=False):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
         if restriction == "rts":
             tweets = [json.loads(line) for line in bzinput if 
                       "retweeted_status" in json.loads(line)]
         elif restriction == "mtns":
-           tweets = [json.loads(line) for line in bzinput if 
-                     "entities" in json.loads(line) and "user_mentions" 
-                     in json.loads(line)["entities"] and not("retweeted_status" in json.loads(line))]
+            tweets = [json.loads(line) for line in bzinput if 
+                      "entities" in json.loads(line) and "user_mentions" 
+                      in json.loads(line)["entities"] and not("retweeted_status" in json.loads(line))]
         else:
             tweets = [json.loads(line) for line in bzinput]
+
+    if write:
+        # Write to a new JSON file
+        output_filename = os.path.splitext(os.path.basename(filename))[0] + "_parsed.json"
+        with open(output_filename, 'w') as json_file:
+            json.dump(tweets, json_file, indent=2)
+
     return tweets
 
 def initialize_retweets_dict():
@@ -81,9 +85,13 @@ def process_retweet(tweet, retweets_dict):
 def convert_dict_to_list(retweets_dict):
     return [{"username": username, **data} for username, data in retweets_dict.items()]
 
-def export_to_json(result_dict):
-    with open("rt.json", "w") as json_file:
-        json.dump(result_dict, json_file, indent=2)
+def export_to_json(result_dict, write=False):
+    if write:
+        # Write to a new JSON file
+        output_filename = "rt_parsed.json"
+        with open(output_filename, 'w') as json_file:
+            json.dump(result_dict, json_file, indent=2)
+    return result_dict
 
 def process_retweets(json_list):
     retweets_dict = initialize_retweets_dict()
@@ -97,18 +105,18 @@ def process_retweets(json_list):
 
     result_dict = {"retweets": retweets_list}
 
-    export_to_json(result_dict)
+    export_to_json(result_dict, write=True)
 
     return result_dict
 
 
-def process_mentions(json_list):
+def process_mentions(json_list, write=False):
     mentions_dict = extract_mentions(json_list)
     mentions_list = list(mentions_dict.values())
     # Sort the list by the number of mentions received
     mentions_list = sorted(mentions_list, key=lambda x: x["receivedMentions"], reverse=True)
     result = {"mentions": mentions_list}
-    save_to_json(result, 'mención.json')
+    save_to_json(result, 'mención.json', write=write)
     return result
 
 def extract_mentions(json_list):
@@ -135,9 +143,12 @@ def extract_mentions(json_list):
 
     return mentions_dict
 
-def save_to_json(data, filename):
-    with open(filename, 'w') as json_file:
-        json.dump(data, json_file, indent=2)
+def save_to_json(data, filename, write=False):
+    if write:
+        # Write to a new JSON file
+        output_filename = filename.replace('.json', '_parsed.json')
+        with open(output_filename, 'w') as json_file:
+            json.dump(data, json_file, indent=2)
 
 def extract_retweets(tweet_list):
     retweets_by_author = defaultdict(list)
@@ -163,7 +174,7 @@ def generate_coretweet(author1, author2, common_retweeters):
         "retweeters": common_retweeters
     }
 
-def find_coretweets(tweet_list):
+def find_coretweets(tweet_list, write=False):
     coretweets = []
     retweets_by_author = extract_retweets(tweet_list)
     seen_pairs = set()
@@ -179,11 +190,14 @@ def find_coretweets(tweet_list):
                         seen_pairs.add(tuple(sorted([author1, author2])))
     # Sort the coretweets by the number of retweeters
     coretweets = sorted(coretweets, key=lambda x: x["totalCoretweets"], reverse=True)
-    return {"coretweets": coretweets}
 
-def write_to_json(data):
-    with open("crrtw.json", "w") as outfile:
-        json.dump(data, outfile, indent=2)
+    dictionary_of_corr= {"coretweets": coretweets}
+    # Write to a new JSON file named crrtw.json if the write parameter is true
+    if write:
+        output_filename = "crrtw.json"
+        with open(output_filename, 'w') as json_file:
+            json.dump(dictionary_of_corr, json_file, indent=2)
+    return dictionary_of_corr
 
 # Create a function named mentions_graph that takes as a parameter a list of tweets
 # and returns a graph with the mentions, also create the graph in gexf format
@@ -221,6 +235,24 @@ def retweets_graph(retweets_list):
     # Return the graph
     return graph
 
+# Create a function named corretweets_graph that takes as a parameter a list of tweets
+# and returns a graph with the corretweets, also create the graph in gexf format
+# Take in account that the more corretweets more weight the edge has
+def corretweets_graph(coretweets_list):
+    # Create a graph
+    graph = nx.Graph()
+    # Add the nodes
+    for coretweet in coretweets_list:
+        graph.add_node(coretweet["authors"]["u1"])
+        graph.add_node(coretweet["authors"]["u2"])
+    # Add the edges
+    for coretweet in coretweets_list:
+        graph.add_edge(coretweet["authors"]["u1"], coretweet["authors"]["u2"], weight=coretweet["totalCoretweets"])
+    # Save the graph in gexf format
+    nx.write_gexf(graph, "crrtw.gexf")
+    # Return the graph
+    return graph
+
 # Main function
 def main(args):
     path = os.getcwd()
@@ -231,8 +263,8 @@ def main(args):
     tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_retweets(tweets_list)
-    retweets_graph(dictionary["retweets"])
+    dictionary = find_coretweets(tweets_list, write=False)
+    corretweets_graph(dictionary["coretweets"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
