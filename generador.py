@@ -7,8 +7,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import sys
 import argparse
-import numpy as np
 from datetime import datetime, timezone
+
+# Import things to measure the time
+import time
 
 
 # Generates a function that gets the following parameters once started or running the program:
@@ -372,6 +374,7 @@ def read_json_bz2(
 # and it is in the format "Wed Jun 25 04:08:58 +0000 2014"
 # if the start date is None then just ignore it
 
+
 def filter_by_date(tweet, start_date=None, end_date=None):
     if start_date is None and end_date is None:
         return True
@@ -386,11 +389,15 @@ def filter_by_date(tweet, start_date=None, end_date=None):
     else:
         return datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
-        ) >= datetime.strptime(start_date, "%d-%m-%y").replace(tzinfo=timezone.utc) and datetime.strptime(
+        ) >= datetime.strptime(start_date, "%d-%m-%y").replace(
+            tzinfo=timezone.utc
+        ) and datetime.strptime(
             tweet["created_at"], "%a %b %d %H:%M:%S %z %Y"
         ) <= datetime.strptime(
             end_date, "%d-%m-%y"
-        ).replace(tzinfo=timezone.utc)
+        ).replace(
+            tzinfo=timezone.utc
+        )
     return hashtags
 
 
@@ -414,6 +421,7 @@ def filter_by_hashtags(tweet, hashtags=None):
 # and returns a list with all the elements of the lists, use sum(list, []) to concatenate
 def concatenate_lists(list_of_lists):
     return sum(list_of_lists, [])
+
 
 # Create a function that receives a base directory, a restriction (rts, mtns or none),
 # an start date, an end date and a list of hashtags (it could be empty or be None)
@@ -442,14 +450,60 @@ def read_json_files(
 # Main function
 def main(args):
     path = os.getcwd()
-    print(path)
-    print(get_directories_with_json_bz2(path + "/testing"))
-
-    # Read the json from the relative directory
-    tweets_list = read_json_files(path+"/testing",restriction="rts", end_date="07-01-16")
-    print(len(tweets_list))
-    dictionary = process_retweets(tweets_list, write=True)
-    retweets_graph(dictionary["retweets"])
+    # Save the arguments
+    arguments = get_parameters(args)
+    # Save the arguments in their corresponding variables
+    directory = arguments["directory"]
+    start_date = arguments["start_date"]
+    end_date = arguments["end_date"]
+    hashtags_file = arguments["hashtags_file"]
+    graph_retweets = arguments["graph_retweets"]
+    json_retweets = arguments["json_retweets"]
+    graph_mentions = arguments["graph_mentions"]
+    json_mentions = arguments["json_mentions"]
+    graph_corretweets = arguments["graph_corretweets"]
+    json_corretweets = arguments["json_corretweets"]
+    # Start to measure the time
+    start_time = time.time()
+    if not (directory is None):
+        # the path is now the relative path to the directory
+        path = os.path.join(path, directory)
+    if hashtags_file is None:
+        hashtags = []
+    else:
+        hashtags = [line.rstrip("\n") for line in open(hashtags_file)]
+    if graph_retweets or json_retweets:
+        # Read the json from the relative directory
+        tweets_list = read_json_files(
+            path, start_date, end_date, restriction="rts", hashtags=hashtags
+        )
+        # Process the retweets
+        dictionary = process_retweets(tweets_list, write=json_retweets)
+        if graph_retweets:
+            # Create the graph
+            retweets_graph(dictionary["retweets"])
+    if graph_mentions or json_mentions:
+        # Read the json from the relative directory
+        tweets_list = read_json_files(
+            path, start_date, end_date, restriction="mtns", hashtags=hashtags
+        )
+        # Process the mentions
+        dictionary = process_mentions(tweets_list, write=json_mentions)
+        if graph_mentions:
+            # Create the graph
+            mentions_graph(dictionary["mentions"])
+    if graph_corretweets or json_corretweets:
+        # Read the json from the relative directory
+        tweets_list = read_json_files(
+            path, start_date, end_date, restriction="rts", hashtags=hashtags
+        )
+        # Process the corretweets
+        dictionary = process_corretweets(tweets_list, write=json_corretweets)
+        if graph_corretweets:
+            # Create the graph
+            corretweets_graph(dictionary["coretweets"])
+    # Print the time it took to run the program
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 # If name is main, then the program is running directly
