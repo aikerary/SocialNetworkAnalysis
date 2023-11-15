@@ -92,6 +92,8 @@ def process_retweets(json_list):
         process_retweet(tweet, retweets_dict)
 
     retweets_list = convert_dict_to_list(retweets_dict)
+    # Sort the list by the number of retweets received
+    retweets_list = sorted(retweets_list, key=lambda x: x["receivedRetweets"], reverse=True)
 
     result_dict = {"retweets": retweets_list}
 
@@ -173,7 +175,8 @@ def find_coretweets(tweet_list):
                     if tuple(sorted([author1, author2])) not in seen_pairs:
                         coretweets.append(coretweet)
                         seen_pairs.add(tuple(sorted([author1, author2])))
-
+    # Sort the coretweets by the number of retweeters
+    coretweets = sorted(coretweets, key=lambda x: x["totalCoretweets"], reverse=True)
     return {"coretweets": coretweets}
 
 def write_to_json(data):
