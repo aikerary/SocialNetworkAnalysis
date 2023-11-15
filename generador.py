@@ -47,10 +47,15 @@ def get_parameters(argv):
 # Generates a function
 # that takes as a parameter the name of a file of a json.bz2 type
 # and returns a list of dictionaries taken from each line of the file
-def read_json_bz2(filename):
+def read_json_bz2(filename, restriction="none"):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
-        tweets=[json.loads(line.strip()) for line in bzinput]
+        if restriction == "rts":
+            tweets = [json.loads(line) for line in bzinput if "retweeted_status" in json.loads(line)]
+        elif restriction == "mtns":
+           tweets = [json.loads(line) for line in bzinput if "entities" in json.loads(line) and "user_mentions" in json.loads(line)["entities"]]
+        else:
+            tweets = [json.loads(line) for line in bzinput]
     return tweets
 
 # Main function
