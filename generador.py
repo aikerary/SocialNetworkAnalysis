@@ -503,7 +503,7 @@ def main(args):
             # Create the graph
             corretweets_graph(dictionary["coretweets"])
     # Print the time it took to run the program
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print(time.time() - start_time)
 
 
 # If name is main, then the program is running directly
