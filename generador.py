@@ -99,7 +99,7 @@ def convert_dict_to_list(retweets_dict):
 def export_to_json(result_dict, write=False):
     if write:
         # Write to a new JSON file
-        output_filename = "rt_parsed.json"
+        output_filename = "rt.json"
         with open(output_filename, 'w') as json_file:
             json.dump(result_dict, json_file, indent=2)
     return result_dict
@@ -295,11 +295,11 @@ def main(args):
     print(get_parameters(args))
 
     # Read the json from the relative directory
-    tweets_list = read_json_files_bz2(path+"/no_testing", restriction="mtns")
+    tweets_list = read_json_files_bz2_third_level(path+"/testing", restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = process_mentions(tweets_list, write=True)
-    mentions_graph(dictionary["mentions"])
+    dictionary = process_retweets(tweets_list, write=True)
+    retweets_graph(dictionary["retweets"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
