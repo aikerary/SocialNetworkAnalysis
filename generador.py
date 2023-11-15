@@ -27,8 +27,6 @@ import argparse
 # e.	-gcrt: (could be or not is a boolean if it exists it is true)
 # f.    -jcrt: (could be or not is a boolean if it exists it is true)
 
-
-
 def get_parameters(argv):
     parser = argparse.ArgumentParser(description='Process some parameters.', add_help=False)
     parser.add_argument('-d', '--directory', type=str, default='data', help='Relative directory (default: data)')
@@ -51,12 +49,55 @@ def read_json_bz2(filename, restriction="none"):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
         if restriction == "rts":
-            tweets = [json.loads(line) for line in bzinput if "retweeted_status" in json.loads(line)]
+            tweets = [json.loads(line) for line in bzinput if 
+                      "retweeted_status" in json.loads(line)]
         elif restriction == "mtns":
-           tweets = [json.loads(line) for line in bzinput if "entities" in json.loads(line) and "user_mentions" in json.loads(line)["entities"]]
+           tweets = [json.loads(line) for line in bzinput if 
+                     "entities" in json.loads(line) and "user_mentions" 
+                     in json.loads(line)["entities"]]
         else:
             tweets = [json.loads(line) for line in bzinput]
     return tweets
+
+def initialize_retweets_dict():
+    return defaultdict(lambda: {"receivedRetweets": 0, "tweets": {}})
+
+def process_retweet(tweet, retweets_dict):
+    retweeter_username = tweet["user"]["screen_name"]
+    retweeted_status = tweet["retweeted_status"]
+
+    original_tweet_id = "tweetId: " + str(retweeted_status["id"])
+    original_tweet_username = retweeted_status["user"]["screen_name"]
+
+    # Increase the counter of retweets received to the original author
+    retweets_dict[original_tweet_username]["receivedRetweets"] += 1
+
+    # Add info about the retweet to the original tweet
+    if original_tweet_id not in retweets_dict[original_tweet_username]["tweets"]:
+        retweets_dict[original_tweet_username]["tweets"][original_tweet_id] = {"retweetedBy": []}
+
+    retweets_dict[original_tweet_username]["tweets"][original_tweet_id]["retweetedBy"].append(retweeter_username)
+
+def convert_dict_to_list(retweets_dict):
+    return [{"username": username, **data} for username, data in retweets_dict.items()]
+
+def export_to_json(result_dict):
+    with open("rt.json", "w") as json_file:
+        json.dump(result_dict, json_file, indent=2)
+
+def process_retweets(json_list):
+    retweets_dict = initialize_retweets_dict()
+
+    for tweet in json_list:
+        process_retweet(tweet, retweets_dict)
+
+    retweets_list = convert_dict_to_list(retweets_dict)
+
+    result_dict = {"retweets": retweets_list}
+
+    export_to_json(result_dict)
+
+    return result_dict
 
 # Main function
 def main(args):
@@ -65,8 +106,10 @@ def main(args):
     print(args)
     print(get_parameters(args))
     # Read the json from the relative directory
-    tweets = read_json_bz2(os.path.join(path, "30.json.bz2"))
-    print(tweets[0])
+    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
+    print(tweets_list[0])
+    print(len(tweets_list))
+    print(type(process_retweets(tweets_list)))
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
