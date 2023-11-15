@@ -3,11 +3,10 @@ import json
 import shutil
 import bz2
 import networkx as nx
-from collections import Counter, defaultdict
-import collections
+from collections import defaultdict
 import sys
-import itertools
 import argparse
+import numpy as np
 
 # Generates a function that gets the following parameters once started or running the program:
 # a.	-d <relative> :  (default value: data)
@@ -42,7 +41,7 @@ def get_parameters(argv):
 # Generates a function
 # that takes as a parameter the name of a file of a json.bz2 type
 # and returns a list of dictionaries taken from each line of the file
-def read_json_bz2(filename, restriction="none", write=False):
+def read_json_bz2(filename, restriction="none"):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
         if restriction == "rts":
@@ -54,14 +53,26 @@ def read_json_bz2(filename, restriction="none", write=False):
                       in json.loads(line)["entities"] and not("retweeted_status" in json.loads(line))]
         else:
             tweets = [json.loads(line) for line in bzinput]
-
-    if write:
-        # Write to a new JSON file
-        output_filename = os.path.splitext(os.path.basename(filename))[0] + "_parsed.json"
-        with open(output_filename, 'w') as json_file:
-            json.dump(tweets, json_file, indent=2)
-
     return tweets
+
+# Create a function named concatenate_lists that takes as a parameter a list of lists
+# and returns a list with all the elements of the lists, use sum(list, []) to concatenate
+def concatenate_lists(list_of_lists):
+    return sum(list_of_lists, [])
+
+# Create a function named read_json_files_bz2 that takes as a parameter a directory
+# and returns a list of dictionaries taken from each line of the files
+# of each json.bz2 file in the directory finally concatenate all the lists
+def read_json_files_bz2(directory, restriction="none"):
+    # Get the list of files in the directory
+    list_of_files = os.listdir(directory)
+    # Create a list of lists of dictionaries
+    list_of_lists = []
+    # Iterate over the list of files
+    # # Read the json.bz2 file
+    list_of_lists=[read_json_bz2(os.path.join(directory, file), restriction) for file in list_of_files]
+    # Concatenate the lists
+    return concatenate_lists(list_of_lists)
 
 def initialize_retweets_dict():
     return defaultdict(lambda: {"receivedRetweets": 0, "tweets": {}})
@@ -93,7 +104,7 @@ def export_to_json(result_dict, write=False):
             json.dump(result_dict, json_file, indent=2)
     return result_dict
 
-def process_retweets(json_list):
+def process_retweets(json_list, write=False):
     retweets_dict = initialize_retweets_dict()
 
     for tweet in json_list:
@@ -104,9 +115,8 @@ def process_retweets(json_list):
     retweets_list = sorted(retweets_list, key=lambda x: x["receivedRetweets"], reverse=True)
 
     result_dict = {"retweets": retweets_list}
-
-    export_to_json(result_dict, write=True)
-
+    if write:
+        export_to_json(result_dict, write=write)
     return result_dict
 
 
@@ -174,7 +184,7 @@ def generate_coretweet(author1, author2, common_retweeters):
         "retweeters": common_retweeters
     }
 
-def find_coretweets(tweet_list, write=False):
+def process_corretweets(tweet_list, write=False):
     coretweets = []
     retweets_by_author = extract_retweets(tweet_list)
     seen_pairs = set()
@@ -259,12 +269,13 @@ def main(args):
     print(path)
     print(args)
     print(get_parameters(args))
+
     # Read the json from the relative directory
-    tweets_list = read_json_bz2(os.path.join(path, "30.json.bz2"), restriction="rts")
+    tweets_list = read_json_files_bz2(path+"/testing", restriction="rts")
     print(tweets_list[0])
     print(len(tweets_list))
-    dictionary = find_coretweets(tweets_list, write=False)
-    corretweets_graph(dictionary["coretweets"])
+    dictionary = process_retweets(tweets_list, write=True)
+    retweets_graph(dictionary["retweets"])
     
 # If name is main, then the program is running directly
 if __name__ == '__main__':
