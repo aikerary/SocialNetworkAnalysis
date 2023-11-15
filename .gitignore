@@ -1,0 +1,6 @@
+# Ignorar todos los archivos y carpetas, excepto .py, README y License
+*
+!*.py
+!README*
+!License*
+!.gitignore
