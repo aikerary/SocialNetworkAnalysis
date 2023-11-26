@@ -135,6 +135,8 @@ def process_retweets(json_list, write=False):
     if write:
         export_to_json(result_dict, write=write)
     return result_dict
+def convert_dict_to_list(retweets_dict):
+    return [{"username": username, **data} for username, data in retweets_dict.items()]
 
 
 def process_mentions(json_list, write=False):
