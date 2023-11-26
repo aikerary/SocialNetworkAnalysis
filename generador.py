@@ -219,13 +219,7 @@ def extract_retweets(tweet_list):
 
 
 
-def generate_coretweet(author1, author2, common_retweeters):
-    pair = tuple(sorted([author1, author2]))
-    return {
-        "authors": {"u1": pair[0], "u2": pair[1]},
-        "totalCoretweets": len(common_retweeters),
-        "retweeters": common_retweeters,
-    }
+
 
 
 def process_corretweets(tweet_list, write=False):
@@ -253,7 +247,13 @@ def process_corretweets(tweet_list, write=False):
             json.dump(dictionary_of_corr, json_file, indent=2)
     return dictionary_of_corr
 
-
+def generate_coretweet(author1, author2, common_retweeters):
+    pair = tuple(sorted([author1, author2]))
+    return {
+        "authors": {"u1": pair[0], "u2": pair[1]},
+        "totalCoretweets": len(common_retweeters),
+        "retweeters": common_retweeters,
+    }
 # Create a function named mentions_graph that takes as a parameter a list of tweets
 # and returns a graph with the mentions, also create the graph in gexf format
 def mentions_graph(mentions_list):
@@ -282,18 +282,20 @@ def mentions_graph(mentions_list):
 def retweets_graph(retweets_list):
     # Create a graph
     graph = nx.Graph()
-    # Add the nodes
+
+    # Add the nodes and edges
     for retweet in retweets_list:
-        graph.add_node(
-            retweet["username"], receivedRetweets=retweet["receivedRetweets"]
-        )
-    # Add the edges
-    for retweet in retweets_list:
+        username = retweet["username"]
+        receivedRetweets = retweet["receivedRetweets"]
+        graph.add_node(username, receivedRetweets=receivedRetweets)
+
         for tweet in retweet["tweets"]:
             for retweeter in retweet["tweets"][tweet]["retweetedBy"]:
-                graph.add_edge(retweet["username"], retweeter, tweetId=tweet)
+                graph.add_edge(username, retweeter, tweetId=tweet)
+
     # Save the graph in gexf format
     nx.write_gexf(graph, "rt.gexf")
+
     # Return the graph
     return graph
 
