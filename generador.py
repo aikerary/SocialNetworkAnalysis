@@ -65,23 +65,19 @@ def get_parameters(argv):
     args = parser.parse_args(argv)
     return vars(args)
 
-
-# Create a function named read_json_files_bz2 that takes as a parameter a directory
-# and returns a list of dictionaries taken from each line of the files
-# of each json.bz2 file in the directory finally concatenate all the lists
+"""
+ Create a function named read_json_files_bz2 that takes as a parameter a directory
+ and returns a list of dictionaries taken from each line of the files
+ of each json.bz2 file in the directory finally concatenate all the lists
+"""
 def read_json_files_bz2(directory, restriction="none"):
     # Get the list of files in the directory
     list_of_files = os.listdir(directory)
-    # Create a list of lists of dictionaries
-    list_of_lists = []
-    # Iterate over the list of files
-    # # Read the json.bz2 file
-    list_of_lists = [
+    # Read the json.bz2 files and concatenate the lists
+    return concatenate_lists([
         read_json_bz2(os.path.join(directory, file), restriction)
         for file in list_of_files
-    ]
-    # Concatenate the lists
-    return concatenate_lists(list_of_lists)
+    ])
 
 
 def initialize_retweets_dict():
@@ -282,20 +278,18 @@ def mentions_graph(mentions_list):
 def retweets_graph(retweets_list):
     # Create a graph
     graph = nx.Graph()
-
-    # Add the nodes and edges
+    # Add the nodes
     for retweet in retweets_list:
-        username = retweet["username"]
-        receivedRetweets = retweet["receivedRetweets"]
-        graph.add_node(username, receivedRetweets=receivedRetweets)
-
+        graph.add_node(
+            retweet["username"], receivedRetweets=retweet["receivedRetweets"]
+        )
+    # Add the edges
+    for retweet in retweets_list:
         for tweet in retweet["tweets"]:
             for retweeter in retweet["tweets"][tweet]["retweetedBy"]:
-                graph.add_edge(username, retweeter, tweetId=tweet)
-
+                graph.add_edge(retweet["username"], retweeter, tweetId=tweet)
     # Save the graph in gexf format
     nx.write_gexf(graph, "rt.gexf")
-
     # Return the graph
     return graph
 
