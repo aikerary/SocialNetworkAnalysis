@@ -108,11 +108,6 @@ def process_retweet(tweet, retweets_dict):
         "retweetedBy"
     ].append(retweeter_username)
 
-
-def convert_dict_to_list(retweets_dict):
-    return [{"username": username, **data} for username, data in retweets_dict.items()]
-
-
 def export_to_json(result_dict, write=False):
     if write:
         # Write to a new JSON file
@@ -120,6 +115,12 @@ def export_to_json(result_dict, write=False):
         with open(output_filename, "w") as json_file:
             json.dump(result_dict, json_file, indent=2)
     return result_dict
+
+def convert_dict_to_list(retweets_dict):
+    return [{"username": username, **data} for username, data in retweets_dict.items()]
+
+
+
 
 
 def process_retweets(json_list, write=False):
@@ -198,7 +199,8 @@ def save_to_json(data, filename, write=False):
     if write:
         with open(filename, "w") as json_file:
             json.dump(data, json_file, indent=2)
-
+def find_common_retweeters(retweeters1, retweeters2):
+    return list(set(retweeters1) & set(retweeters2))
 
 def extract_retweets(tweet_list):
     retweets_by_author = defaultdict(list)
@@ -214,8 +216,7 @@ def extract_retweets(tweet_list):
     return retweets_by_author
 
 
-def find_common_retweeters(retweeters1, retweeters2):
-    return list(set(retweeters1) & set(retweeters2))
+
 
 
 def generate_coretweet(author1, author2, common_retweeters):
