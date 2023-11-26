@@ -213,13 +213,6 @@ def extract_retweets(tweet_list):
 
     return retweets_by_author
 
-
-
-
-
-
-
-
 def process_corretweets(tweet_list, write=False):
     coretweets = []
     retweets_by_author = extract_retweets(tweet_list)
