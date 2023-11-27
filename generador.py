@@ -158,6 +158,7 @@ def process_mentions(json_list, write=False):
                         {
                             "mentionBy": tweet["user"]["screen_name"],
                             "tweets": [tweet_id],
+                            "isTwitterBlue": False
                         }
                     ],
                 }
@@ -178,6 +179,7 @@ def process_mentions(json_list, write=False):
                         {
                             "mentionBy": tweet["user"]["screen_name"],
                             "tweets": [tweet_id],
+                            "isTwitterBlue": False
                         }
                     )
     # Parse the list to a json
@@ -217,15 +219,15 @@ def enviar_mensaje(mensaje, destino=0):
 
     # Verify if rank is equal to destination
     if rank == destino:
-        # Enviar el mensaje al destino desde el proceso con el rango especificado
+        # Send Message
         comm.send(mensaje, dest=destino)
-        print(f"Proceso {rank} envió el mensaje '{mensaje}' al proceso {destino}.")
+        print(f"Process {rank} sent menssage '{mensaje}' to process {destino}.")
     elif rank == 0:
         # Mensaje para el proceso 0 si no es el destino
-        print(f"Proceso {rank} no envió ningún mensaje, ya que no es el destino.")
+        print(f"Process {rank} didn't send any message")
     else:
         # Mensaje para otros procesos si no son el destino
-        print(f"Proceso {rank} no envió ningún mensaje, ya que no es el destino.")
+        print(f"Process {rank} didn't send any message")
 
 def process_corretweets(tweet_list, write=False):
     coretweets = []
