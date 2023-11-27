@@ -17,11 +17,9 @@ import time
 # a.	-d <relative> :  (default value: data)
 # b.	-fi <date inicial> : date (dd-mm-yy)
 # c.	-ff <date final> : date (dd-mm-yy)
-# d.	-h <nombre de archivo>:Nombre de
-# archivo de texto en el
-# que se encuentra los hashtags por
-# los cuales se filtrarán los tweets,
-# uno en cada línea
+# d.	-h <filename>:Filename where 
+# hashtags are filtered by tweets
+# line by line
 # e.	-grt: (could be or not is a boolean if it exists it is true)
 # f.	-jrt: (could be or not is a boolean if it exists it is true)
 # g.	-gm: (could be or not is a boolean if it exists it is true)
@@ -30,7 +28,7 @@ import time
 # j.    -jcrt: (could be or not is a boolean if it exists it is true)
 def get_parameters(argv):
     parser = argparse.ArgumentParser(
-        description="Process some parameters.", add_help=False
+        description="Process specified parameters.", add_help=False
     )
     parser.add_argument(
         "-d",
@@ -213,11 +211,11 @@ def extract_retweets(tweet_list):
 
     return retweets_by_author
 def enviar_mensaje(mensaje, destino=0):
-    # Inicializar MPI
+    # MPI Init
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
-    # Verificar si el rango es el destino
+    # Verify if rank is equal to destination
     if rank == destino:
         # Enviar el mensaje al destino desde el proceso con el rango especificado
         comm.send(mensaje, dest=destino)
