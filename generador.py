@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 # Import things to measure the time
 import time
+from mpi4py import MPI
 
 
 # Generates a function that gets the following parameters once started or running the program:
@@ -412,13 +413,24 @@ def concatenate_lists(list_of_lists):
 # an start date, an end date and a list of hashtags (it could be empty or be None)
 # and returns a list of tweets that are in all the possible json.bz2 files in all the subdirectories
 # of the base directory
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
 def read_json_files(
     base_directory, start_date=None, end_date=None, restriction=None, hashtags=None
 ):
     # Get the list of directories with json.bz2 files
     list_of_directories = get_directories_with_json_bz2(base_directory)
-    # Read the json.bz2 files
-    list_of_lists = [
+    # Divide the directories among processes
+    chunk_size = len(list_of_directories) // size
+    start_index = rank * chunk_size
+    end_index = (rank + 1) * chunk_size if rank < size - 1 else len(list_of_directories)
+    local_directories = list_of_directories[start_index:end_index]
+    
+    # Read the json.bz2 files for local directories
+    local_lists = [
         read_json_bz2(
             directory,
             restriction,
@@ -426,10 +438,18 @@ def read_json_files(
             end_date,
             hashtags,
         )
-        for directory in list_of_directories
+        for directory in local_directories
     ]
-    # Concatenate the lists
-    return concatenate_lists(list_of_lists)
+    
+    # Gather the local lists from all processes
+    all_lists = comm.gather(local_lists, root=0)
+    
+    if rank == 0:
+        # Concatenate the lists
+        concatenated_lists = concatenate_lists(sum(all_lists, []))
+        return concatenated_lists
+    else:
+        return None
 
 def filter_if_retweet(tweet):
     if "retweeted_status" in tweet:
