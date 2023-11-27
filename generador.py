@@ -87,7 +87,7 @@ def initialize_retweets_dict():
 def process_retweet(tweet, retweets_dict):
     retweeter_username = tweet["user"]["screen_name"]
     retweeted_status = tweet["retweeted_status"]
-
+    isTwitterBlue = False
     original_tweet_id = "tweetId: " + str(retweeted_status["id"])
     original_tweet_username = retweeted_status["user"]["screen_name"]
 
