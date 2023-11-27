@@ -66,24 +66,6 @@ def get_parameters(argv):
     return vars(args)
 
 
-# Create a function named read_json_files_bz2 that takes as a parameter a directory
-# and returns a list of dictionaries taken from each line of the files
-# of each json.bz2 file in the directory finally concatenate all the lists
-def read_json_files_bz2(directory, restriction="none"):
-    # Get the list of files in the directory
-    list_of_files = os.listdir(directory)
-    # Create a list of lists of dictionaries
-    list_of_lists = []
-    # Iterate over the list of files
-    # # Read the json.bz2 file
-    list_of_lists = [
-        read_json_bz2(os.path.join(directory, file), restriction)
-        for file in list_of_files
-    ]
-    # Concatenate the lists
-    return concatenate_lists(list_of_lists)
-
-
 def initialize_retweets_dict():
     return defaultdict(lambda: {"receivedRetweets": 0, "tweets": {}})
 
@@ -337,32 +319,35 @@ def read_json_bz2(
 ):
     tweets = []
     with bz2.open(filename, "rt", encoding="utf-8") as bzinput:
+        parsed_lines = (json.loads(line) for line in bzinput)
+        hashtags_set = set(hashtags) if hashtags else set()
+        
         if restriction == "rts":
             tweets = [
-                json.loads(line)
-                for line in bzinput
-                if "entities" in json.loads(line)
-                and "retweeted_status" in json.loads(line)
-                and filter_by_date(json.loads(line), start_date, end_date)
-                and filter_by_hashtags(json.loads(line), hashtags)
+                line
+                for line in parsed_lines
+                if "entities" in line
+                and "retweeted_status" in line
+                and filter_by_date(line, start_date, end_date)
+                and filter_by_hashtags(line, hashtags_set)
             ]
         elif restriction == "mtns":
             tweets = [
-                json.loads(line)
-                for line in bzinput
-                if "entities" in json.loads(line)
-                and "user_mentions" in json.loads(line)["entities"]
-                and not ("retweeted_status" in json.loads(line))
-                and filter_by_date(json.loads(line), start_date, end_date)
-                and filter_by_hashtags(json.loads(line), hashtags)
+                line
+                for line in parsed_lines
+                if "entities" in line
+                and "user_mentions" in line["entities"]
+                and "retweeted_status" not in line
+                and filter_by_date(line, start_date, end_date)
+                and filter_by_hashtags(line, hashtags_set)
             ]
         else:
             tweets = [
-                json.loads(line)
-                for line in bzinput
-                if "entities" in json.loads(line)
-                and filter_by_date(json.loads(line), start_date, end_date)
-                and filter_by_hashtags(json.loads(line), hashtags)
+                line
+                for line in parsed_lines
+                if "entities" in line
+                and filter_by_date(line, start_date, end_date)
+                and filter_by_hashtags(line, hashtags_set)
             ]
     return tweets
 
@@ -446,6 +431,17 @@ def read_json_files(
     # Concatenate the lists
     return concatenate_lists(list_of_lists)
 
+def filter_if_retweet(tweet):
+    if "retweeted_status" in tweet:
+        return True
+    else:
+        return False
+    
+def filter_if_mention(tweet):
+    if "user_mentions" in tweet["entities"] and not ("retweeted_status" in tweet):
+        return True
+    else:
+        return False
 
 # Main function
 def main(args):
@@ -472,33 +468,31 @@ def main(args):
         hashtags = []
     else:
         hashtags = [line.rstrip("\n") for line in open(hashtags_file)]
-    if graph_retweets or json_retweets:
-        # Read the json from the relative directory
+    if graph_mentions or json_mentions or graph_retweets or json_retweets or graph_corretweets or json_corretweets:
         tweets_list = read_json_files(
-            path, start_date, end_date, restriction="rts", hashtags=hashtags
+            path, start_date, end_date, restriction="none", hashtags=hashtags
         )
+    if graph_retweets or json_retweets:
+        # Filter by retweets
+        tweets_list_rts = list(filter(filter_if_retweet, tweets_list))
         # Process the retweets
-        dictionary = process_retweets(tweets_list, write=json_retweets)
+        dictionary = process_retweets(tweets_list_rts, write=json_retweets)
         if graph_retweets:
             # Create the graph
             retweets_graph(dictionary["retweets"])
     if graph_mentions or json_mentions:
-        # Read the json from the relative directory
-        tweets_list = read_json_files(
-            path, start_date, end_date, restriction="mtns", hashtags=hashtags
-        )
+        # Filter by mentions
+        tweets_list_mtn = list(filter(filter_if_mention, tweets_list))
         # Process the mentions
-        dictionary = process_mentions(tweets_list, write=json_mentions)
+        dictionary = process_mentions(tweets_list_mtn, write=json_mentions)
         if graph_mentions:
             # Create the graph
             mentions_graph(dictionary["mentions"])
     if graph_corretweets or json_corretweets:
-        # Read the json from the relative directory
-        tweets_list = read_json_files(
-            path, start_date, end_date, restriction="rts", hashtags=hashtags
-        )
+        # Filter by retweets
+        tweets_list_crt = list(filter(filter_if_retweet, tweets_list))
         # Process the corretweets
-        dictionary = process_corretweets(tweets_list, write=json_corretweets)
+        dictionary = process_corretweets(tweets_list_crt, write=json_corretweets)
         if graph_corretweets:
             # Create the graph
             corretweets_graph(dictionary["coretweets"])
