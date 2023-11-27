@@ -212,6 +212,22 @@ def extract_retweets(tweet_list):
             retweets_by_author[original_author_screen_name].append(screen_name)
 
     return retweets_by_author
+def enviar_mensaje(mensaje, destino=0):
+    # Inicializar MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # Verificar si el rango es el destino
+    if rank == destino:
+        # Enviar el mensaje al destino desde el proceso con el rango especificado
+        comm.send(mensaje, dest=destino)
+        print(f"Proceso {rank} envió el mensaje '{mensaje}' al proceso {destino}.")
+    elif rank == 0:
+        # Mensaje para el proceso 0 si no es el destino
+        print(f"Proceso {rank} no envió ningún mensaje, ya que no es el destino.")
+    else:
+        # Mensaje para otros procesos si no son el destino
+        print(f"Proceso {rank} no envió ningún mensaje, ya que no es el destino.")
 
 def process_corretweets(tweet_list, write=False):
     coretweets = []
