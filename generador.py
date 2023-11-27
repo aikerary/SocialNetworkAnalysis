@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 import sys
 import argparse
 from datetime import datetime, timezone
-import mpi4py
 
 # Import things to measure the time
 import time
@@ -18,9 +17,11 @@ import time
 # a.	-d <relative> :  (default value: data)
 # b.	-fi <date inicial> : date (dd-mm-yy)
 # c.	-ff <date final> : date (dd-mm-yy)
-# d.	-h <filename>:Filename where 
-# hashtags are filtered by tweets
-# line by line
+# d.	-h <nombre de archivo>:Nombre de
+# archivo de texto en el
+# que se encuentra los hashtags por
+# los cuales se filtrarán los tweets,
+# uno en cada línea
 # e.	-grt: (could be or not is a boolean if it exists it is true)
 # f.	-jrt: (could be or not is a boolean if it exists it is true)
 # g.	-gm: (could be or not is a boolean if it exists it is true)
@@ -29,7 +30,7 @@ import time
 # j.    -jcrt: (could be or not is a boolean if it exists it is true)
 def get_parameters(argv):
     parser = argparse.ArgumentParser(
-        description="Process specified parameters.", add_help=False
+        description="Process some parameters.", add_help=False
     )
     parser.add_argument(
         "-d",
@@ -64,19 +65,23 @@ def get_parameters(argv):
     args = parser.parse_args(argv)
     return vars(args)
 
-"""
- Create a function named read_json_files_bz2 that takes as a parameter a directory
- and returns a list of dictionaries taken from each line of the files
- of each json.bz2 file in the directory finally concatenate all the lists
-"""
+
+# Create a function named read_json_files_bz2 that takes as a parameter a directory
+# and returns a list of dictionaries taken from each line of the files
+# of each json.bz2 file in the directory finally concatenate all the lists
 def read_json_files_bz2(directory, restriction="none"):
     # Get the list of files in the directory
     list_of_files = os.listdir(directory)
-    # Read the json.bz2 files and concatenate the lists
-    return concatenate_lists([
+    # Create a list of lists of dictionaries
+    list_of_lists = []
+    # Iterate over the list of files
+    # # Read the json.bz2 file
+    list_of_lists = [
         read_json_bz2(os.path.join(directory, file), restriction)
         for file in list_of_files
-    ])
+    ]
+    # Concatenate the lists
+    return concatenate_lists(list_of_lists)
 
 
 def initialize_retweets_dict():
@@ -86,7 +91,7 @@ def initialize_retweets_dict():
 def process_retweet(tweet, retweets_dict):
     retweeter_username = tweet["user"]["screen_name"]
     retweeted_status = tweet["retweeted_status"]
-    isTwitterBlue = False
+
     original_tweet_id = "tweetId: " + str(retweeted_status["id"])
     original_tweet_username = retweeted_status["user"]["screen_name"]
 
@@ -103,6 +108,11 @@ def process_retweet(tweet, retweets_dict):
         "retweetedBy"
     ].append(retweeter_username)
 
+
+def convert_dict_to_list(retweets_dict):
+    return [{"username": username, **data} for username, data in retweets_dict.items()]
+
+
 def export_to_json(result_dict, write=False):
     if write:
         # Write to a new JSON file
@@ -110,12 +120,6 @@ def export_to_json(result_dict, write=False):
         with open(output_filename, "w") as json_file:
             json.dump(result_dict, json_file, indent=2)
     return result_dict
-
-def convert_dict_to_list(retweets_dict):
-    return [{"username": username, **data} for username, data in retweets_dict.items()]
-
-
-
 
 
 def process_retweets(json_list, write=False):
@@ -134,8 +138,6 @@ def process_retweets(json_list, write=False):
     if write:
         export_to_json(result_dict, write=write)
     return result_dict
-def convert_dict_to_list(retweets_dict):
-    return [{"username": username, **data} for username, data in retweets_dict.items()]
 
 
 def process_mentions(json_list, write=False):
@@ -159,7 +161,6 @@ def process_mentions(json_list, write=False):
                         {
                             "mentionBy": tweet["user"]["screen_name"],
                             "tweets": [tweet_id],
-                            "isTwitterBlue": False
                         }
                     ],
                 }
@@ -180,7 +181,6 @@ def process_mentions(json_list, write=False):
                         {
                             "mentionBy": tweet["user"]["screen_name"],
                             "tweets": [tweet_id],
-                            "isTwitterBlue": False
                         }
                     )
     # Parse the list to a json
@@ -198,8 +198,7 @@ def save_to_json(data, filename, write=False):
     if write:
         with open(filename, "w") as json_file:
             json.dump(data, json_file, indent=2)
-def find_common_retweeters(retweeters1, retweeters2):
-    return list(set(retweeters1) & set(retweeters2))
+
 
 def extract_retweets(tweet_list):
     retweets_by_author = defaultdict(list)
@@ -213,6 +212,20 @@ def extract_retweets(tweet_list):
             retweets_by_author[original_author_screen_name].append(screen_name)
 
     return retweets_by_author
+
+
+def find_common_retweeters(retweeters1, retweeters2):
+    return list(set(retweeters1) & set(retweeters2))
+
+
+def generate_coretweet(author1, author2, common_retweeters):
+    pair = tuple(sorted([author1, author2]))
+    return {
+        "authors": {"u1": pair[0], "u2": pair[1]},
+        "totalCoretweets": len(common_retweeters),
+        "retweeters": common_retweeters,
+    }
+
 
 def process_corretweets(tweet_list, write=False):
     coretweets = []
@@ -239,13 +252,7 @@ def process_corretweets(tweet_list, write=False):
             json.dump(dictionary_of_corr, json_file, indent=2)
     return dictionary_of_corr
 
-def generate_coretweet(author1, author2, common_retweeters):
-    pair = tuple(sorted([author1, author2]))
-    return {
-        "authors": {"u1": pair[0], "u2": pair[1]},
-        "totalCoretweets": len(common_retweeters),
-        "retweeters": common_retweeters,
-    }
+
 # Create a function named mentions_graph that takes as a parameter a list of tweets
 # and returns a graph with the mentions, also create the graph in gexf format
 def mentions_graph(mentions_list):
@@ -446,16 +453,16 @@ def main(args):
     # Save the arguments
     arguments = get_parameters(args)
     # Save the arguments in their corresponding variables
-    graph_mentions = arguments["graph_mentions"]
-    json_mentions = arguments["json_mentions"]
-    graph_corretweets = arguments["graph_corretweets"]
-    json_corretweets = arguments["json_corretweets"]
     directory = arguments["directory"]
     start_date = arguments["start_date"]
     end_date = arguments["end_date"]
     hashtags_file = arguments["hashtags_file"]
     graph_retweets = arguments["graph_retweets"]
     json_retweets = arguments["json_retweets"]
+    graph_mentions = arguments["graph_mentions"]
+    json_mentions = arguments["json_mentions"]
+    graph_corretweets = arguments["graph_corretweets"]
+    json_corretweets = arguments["json_corretweets"]
     # Start to measure the time
     start_time = time.time()
     if not (directory is None):
@@ -496,7 +503,7 @@ def main(args):
             # Create the graph
             corretweets_graph(dictionary["coretweets"])
     # Print the time it took to run the program
-    print("Time taken is "+str(time.time() - start_time))
+    print(time.time() - start_time)
 
 
 # If name is main, then the program is running directly
