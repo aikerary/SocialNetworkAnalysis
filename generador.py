@@ -461,16 +461,16 @@ def main(args):
     # Save the arguments
     arguments = get_parameters(args)
     # Save the arguments in their corresponding variables
+    graph_mentions = arguments["graph_mentions"]
+    json_mentions = arguments["json_mentions"]
+    graph_corretweets = arguments["graph_corretweets"]
+    json_corretweets = arguments["json_corretweets"]
     directory = arguments["directory"]
     start_date = arguments["start_date"]
     end_date = arguments["end_date"]
     hashtags_file = arguments["hashtags_file"]
     graph_retweets = arguments["graph_retweets"]
     json_retweets = arguments["json_retweets"]
-    graph_mentions = arguments["graph_mentions"]
-    json_mentions = arguments["json_mentions"]
-    graph_corretweets = arguments["graph_corretweets"]
-    json_corretweets = arguments["json_corretweets"]
     # Start to measure the time
     start_time = time.time()
     if not (directory is None):
@@ -511,7 +511,7 @@ def main(args):
             # Create the graph
             corretweets_graph(dictionary["coretweets"])
     # Print the time it took to run the program
-    print(time.time() - start_time)
+    print("Time taken is "+str(time.time() - start_time))
 
 
 # If name is main, then the program is running directly
