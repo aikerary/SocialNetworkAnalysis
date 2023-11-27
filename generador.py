@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import sys
 import argparse
 from datetime import datetime, timezone
+import mpi4py
 
 # Import things to measure the time
 import time
@@ -212,22 +213,6 @@ def extract_retweets(tweet_list):
             retweets_by_author[original_author_screen_name].append(screen_name)
 
     return retweets_by_author
-def enviar_mensaje(mensaje, destino=0):
-    # MPI Init
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
-    # Verify if rank is equal to destination
-    if rank == destino:
-        # Send Message
-        comm.send(mensaje, dest=destino)
-        print(f"Process {rank} sent menssage '{mensaje}' to process {destino}.")
-    elif rank == 0:
-        # Mensaje para el proceso 0 si no es el destino
-        print(f"Process {rank} didn't send any message")
-    else:
-        # Mensaje para otros procesos si no son el destino
-        print(f"Process {rank} didn't send any message")
 
 def process_corretweets(tweet_list, write=False):
     coretweets = []
