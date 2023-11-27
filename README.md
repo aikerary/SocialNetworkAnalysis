@@ -10,13 +10,13 @@ The main deliverable for this project is a Python script named `generador.py`. T
 
 ### Input Parameters
 
-1. **-d <path relativo>:** Relative directory where the tweets are located. The script should traverse the entire folder structure to find tweets, including those in subdirectories.
+1. **-d <relative path>:** Relative directory where the tweets are located. The script should traverse the entire folder structure to find tweets, including those in subdirectories.
 
-2. **-fi <fecha inicial>:** Start date (dd-mm-aa) from which tweets should be considered. Ignore this restriction if the parameter is not present.
+2. **-fi <initial date>:** Start date (dd-mm-aa) from which tweets should be considered. Ignore this restriction if the parameter is not present.
 
-3. **-ff <fecha final>:** End date (dd-mm-aa) until which tweets should be considered. Ignore this restriction if the parameter is not present.
+3. **-ff <end date>:** End date (dd-mm-aa) until which tweets should be considered. Ignore this restriction if the parameter is not present.
 
-4. **-h <nombre de archivo>:** Text file containing hashtags for filtering tweets. Each line should contain a single hashtag. Ignore this restriction if the parameter is not present.
+4. **-h <filename>:** Text file containing hashtags for filtering tweets. Each line should contain a single hashtag. Ignore this restriction if the parameter is not present.
 
 ### Output Parameters
 
