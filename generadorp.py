@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 # Import things to measure the time
 import time
+from mpi4py import MPI
 
 
 # Generates a function that gets the following parameters once started or running the program:
@@ -98,7 +99,7 @@ def convert_dict_to_list(retweets_dict):
 def export_to_json(result_dict, write=False):
     if write:
         # Write to a new JSON file
-        output_filename = "rt.json"
+        output_filename = "rtp.json"
         with open(output_filename, "w") as json_file:
             json.dump(result_dict, json_file, indent=2)
     return result_dict
@@ -172,7 +173,7 @@ def process_mentions(json_list, write=False):
     # delete all the mentions for null
     mentions_list = [x for x in mentions_list if x["username"] != "null"]
     result = {"mentions": mentions_list}
-    save_to_json(result, "mención.json", write=write)
+    save_to_json(result, "menciónp.json", write=write)
     return result
 
 
@@ -229,7 +230,7 @@ def process_corretweets(tweet_list, write=False):
     dictionary_of_corr = {"coretweets": coretweets}
     # Write to a new JSON file named crrtw.json if the write parameter is true
     if write:
-        output_filename = "crrtw.json"
+        output_filename = "crrtwp.json"
         with open(output_filename, "w") as json_file:
             json.dump(dictionary_of_corr, json_file, indent=2)
     return dictionary_of_corr
@@ -253,7 +254,7 @@ def mentions_graph(mentions_list):
                     mention["username"], mention_data["mentionBy"], tweetId=tweet
                 )
     # Save the graph in gexf format
-    nx.write_gexf(graph, "mención.gexf")
+    nx.write_gexf(graph, "menciónp.gexf")
     # Return the graph
     return graph
 
@@ -274,7 +275,7 @@ def retweets_graph(retweets_list):
             for retweeter in retweet["tweets"][tweet]["retweetedBy"]:
                 graph.add_edge(retweet["username"], retweeter, tweetId=tweet)
     # Save the graph in gexf format
-    nx.write_gexf(graph, "rt.gexf")
+    nx.write_gexf(graph, "rtp.gexf")
     # Return the graph
     return graph
 
@@ -297,7 +298,7 @@ def corretweets_graph(coretweets_list):
             weight=coretweet["totalCoretweets"],
         )
     # Save the graph in gexf format
-    nx.write_gexf(graph, "crrtw.gexf")
+    nx.write_gexf(graph, "crrtwp.gexf")
     # Return the graph
     return graph
 
@@ -412,13 +413,24 @@ def concatenate_lists(list_of_lists):
 # an start date, an end date and a list of hashtags (it could be empty or be None)
 # and returns a list of tweets that are in all the possible json.bz2 files in all the subdirectories
 # of the base directory
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
 def read_json_files(
     base_directory, start_date=None, end_date=None, restriction=None, hashtags=None
 ):
     # Get the list of directories with json.bz2 files
     list_of_directories = get_directories_with_json_bz2(base_directory)
-    # Read the json.bz2 files
-    list_of_lists = [
+    # Divide the directories among processes
+    chunk_size = len(list_of_directories) // size
+    start_index = rank * chunk_size
+    end_index = (rank + 1) * chunk_size if rank < size - 1 else len(list_of_directories)
+    local_directories = list_of_directories[start_index:end_index]
+    
+    # Read the json.bz2 files for local directories
+    local_lists = [
         read_json_bz2(
             directory,
             restriction,
@@ -426,10 +438,18 @@ def read_json_files(
             end_date,
             hashtags,
         )
-        for directory in list_of_directories
+        for directory in local_directories
     ]
-    # Concatenate the lists
-    return concatenate_lists(list_of_lists)
+    
+    # Gather the local lists from all processes
+    all_lists = comm.gather(local_lists, root=0)
+    
+    if rank == 0:
+        # Concatenate the lists
+        concatenated_lists = concatenate_lists(sum(all_lists, []))
+        return concatenated_lists
+    else:
+        return None
 
 def filter_if_retweet(tweet):
     if "retweeted_status" in tweet:
